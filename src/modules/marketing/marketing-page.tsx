@@ -17,7 +17,10 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart"
 import { mockAdSpend, mockLeads } from "@/data/dashboard"
+import { useChannelAttribution } from "@/hooks/use-channel-attribution"
 import { filterByDateRange } from "@/lib/date-filters"
+import { resolveAdSpendChannels } from "@/lib/resolve-ad-attribution"
+import type { AdChannelMappingRow } from "@/types/ad-channel-mapping"
 import { formatCurrency, formatNumber } from "@/lib/format"
 import {
   isCpaAlert,
@@ -76,7 +79,8 @@ const leadsLineConfig = {
 
 function aggregateChannels(
   ads: typeof mockAdSpend,
-  leads: typeof mockLeads
+  leads: typeof mockLeads,
+  mappings: readonly AdChannelMappingRow[]
 ): ChannelPerformanceRow[] {
   const map = new Map<string, ChannelPerformanceRow>()
 
@@ -85,12 +89,16 @@ function aggregateChannels(
   }
 
   for (const a of ads) {
-    const k = key(a.channel_macro, a.channel_detallado)
+    const { channel_macro, channel_detallado } = resolveAdSpendChannels(
+      a,
+      mappings
+    )
+    const k = key(channel_macro, channel_detallado)
     let row = map.get(k)
     if (!row) {
       row = {
-        channel_macro: a.channel_macro,
-        channel_detallado: a.channel_detallado,
+        channel_macro,
+        channel_detallado,
         spend: 0,
         revenue: 0,
         leads: 0,
@@ -140,6 +148,7 @@ function stableExtra(seed: string, mod: number) {
 }
 
 export function MarketingPage() {
+  const { mappings, revision } = useChannelAttribution()
   const [range, setRange] = useState<TimeRangeFilter>("month")
   const [ready, setReady] = useState(false)
   const [drill, setDrill] = useState<ChannelPerformanceRow | null>(null)
@@ -159,22 +168,20 @@ export function MarketingPage() {
   )
 
   const rows = useMemo(
-    () => aggregateChannels(filteredAds, filteredLeads),
-    [filteredAds, filteredLeads]
+    () => aggregateChannels(filteredAds, filteredLeads, mappings),
+    [filteredAds, filteredLeads, mappings, revision]
   )
 
   const spendByChannel = useMemo(() => {
     const m = new Map<string, number>()
     for (const a of filteredAds) {
-      m.set(
-        a.channel_detallado,
-        (m.get(a.channel_detallado) ?? 0) + a.spend
-      )
+      const { channel_detallado } = resolveAdSpendChannels(a, mappings)
+      m.set(channel_detallado, (m.get(channel_detallado) ?? 0) + a.spend)
     }
     return [...m.entries()]
       .map(([name, spend]) => ({ name, spend }))
       .sort((a, b) => b.spend - a.spend)
-  }, [filteredAds])
+  }, [filteredAds, mappings, revision])
 
   const leadsByChannel = useMemo(() => {
     const m = new Map<string, number>()

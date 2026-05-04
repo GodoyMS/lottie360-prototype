@@ -41,6 +41,8 @@ export interface LeadRecord {
 
 export interface AdSpendRecord {
   id: string
+  /** Identificador de anuncio/campaña; mapeado en Parámetros de canales */
+  ad_id: string
   date: string
   channel_macro: ChannelMacro
   channel_detallado: ChannelDetallado

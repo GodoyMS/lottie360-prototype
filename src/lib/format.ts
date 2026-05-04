@@ -42,3 +42,10 @@ export function formatChartAxisDate(isoDate: string): string {
     month: "short",
   }).format(new Date(isoDate))
 }
+
+export function formatDateTime(isoMs: number): string {
+  return new Intl.DateTimeFormat("es-ES", {
+    dateStyle: "short",
+    timeStyle: "medium",
+  }).format(new Date(isoMs))
+}

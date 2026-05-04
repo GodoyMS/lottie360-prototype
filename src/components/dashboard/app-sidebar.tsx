@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import {
+  GitBranch,
   LayoutDashboard,
   Megaphone,
   ShoppingCart,
@@ -33,6 +34,11 @@ const nav = [
     title: "Marketing",
     href: "/dashboard/marketing",
     icon: Megaphone,
+  },
+  {
+    title: "Parámetros de canales",
+    href: "/dashboard/parametros-canales",
+    icon: GitBranch,
   },
   {
     title: "Ventas",

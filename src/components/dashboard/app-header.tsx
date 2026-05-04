@@ -1,6 +1,7 @@
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useTheme } from "next-themes"
 import {
+  GitBranch,
   LogOut,
   Monitor,
   Moon,
@@ -24,9 +25,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/hooks/use-auth"
+import { useChannelAttribution } from "@/hooks/use-channel-attribution"
+import { Badge } from "@/components/ui/badge"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { formatDateTime } from "@/lib/format"
 
 export function AppHeader() {
   const { session, logout } = useAuth()
+  const { revision, updatedAt } = useChannelAttribution()
   const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
 
@@ -47,6 +57,25 @@ export function AppHeader() {
         />
       </div>
       <div className="ml-auto flex items-center gap-1.5">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              to="/dashboard/parametros-canales"
+              className="hidden sm:block"
+            >
+              <Badge
+                variant="outline"
+                className="h-8 gap-1.5 border-border/80 px-2.5 font-normal tabular-nums hover:bg-muted/60"
+              >
+                <GitBranch className="size-3.5 opacity-80" aria-hidden />
+                Atribución · {revision}
+              </Badge>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="max-w-xs text-xs">
+            Mapeos ad_id → canal. Última actualización: {formatDateTime(updatedAt)}
+          </TooltipContent>
+        </Tooltip>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

@@ -3,6 +3,7 @@ import type { AdSpendRecord } from "@/types/analytics"
 export const mockAdSpend: AdSpendRecord[] = [
   {
     id: "AD-01",
+    ad_id: "AD-01",
     date: "2026-04-28",
     channel_macro: "Paid Social",
     channel_detallado: "Meta Ads",
@@ -12,6 +13,7 @@ export const mockAdSpend: AdSpendRecord[] = [
   },
   {
     id: "AD-02",
+    ad_id: "AD-02",
     date: "2026-04-28",
     channel_macro: "Paid Social",
     channel_detallado: "TikTok Ads",
@@ -21,6 +23,7 @@ export const mockAdSpend: AdSpendRecord[] = [
   },
   {
     id: "AD-03",
+    ad_id: "AD-03",
     date: "2026-04-27",
     channel_macro: "Search",
     channel_detallado: "Google Ads",
@@ -30,6 +33,7 @@ export const mockAdSpend: AdSpendRecord[] = [
   },
   {
     id: "AD-04",
+    ad_id: "AD-04",
     date: "2026-04-27",
     channel_macro: "Paid Social",
     channel_detallado: "YouTube Ads",
@@ -39,6 +43,7 @@ export const mockAdSpend: AdSpendRecord[] = [
   },
   {
     id: "AD-05",
+    ad_id: "AD-05",
     date: "2026-04-26",
     channel_macro: "Marketplace",
     channel_detallado: "Amazon SP",
@@ -48,6 +53,7 @@ export const mockAdSpend: AdSpendRecord[] = [
   },
   {
     id: "AD-06",
+    ad_id: "AD-06",
     date: "2026-04-26",
     channel_macro: "Paid Social",
     channel_detallado: "Influencers",
@@ -57,6 +63,7 @@ export const mockAdSpend: AdSpendRecord[] = [
   },
   ...Array.from({ length: 20 }, (_, i) => ({
     id: `AD-${String(10 + i).padStart(2, "0")}`,
+    ad_id: `AD-${String(10 + i).padStart(2, "0")}`,
     date: `2026-04-${String(25 - (i % 20)).padStart(2, "0")}`,
     channel_macro: "Paid Social" as const,
     channel_detallado: (["Meta Ads", "TikTok Ads"] as const)[i % 2],

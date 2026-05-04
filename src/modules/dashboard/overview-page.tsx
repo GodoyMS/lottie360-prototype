@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -10,7 +10,7 @@ import {
   Line,
   XAxis,
   YAxis,
-} from "recharts"
+} from "recharts";
 import {
   Euro,
   MousePointerClick,
@@ -18,39 +18,44 @@ import {
   Wallet,
   Target,
   TrendingUp,
-  Users,
   TriangleAlert,
-} from "lucide-react"
+  SportShoe,
+} from "lucide-react";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
-} from "@/components/ui/chart"
-import { KpiStatCard } from "@/components/dashboard/kpi-stat-card"
+} from "@/components/ui/chart";
+import { KpiStatCard } from "@/components/dashboard/kpi-stat-card";
 import {
   buildChannelPerformance,
   buildRevenueTimeSeries,
   computeDashboardKpis,
-} from "@/data/dashboard"
-import { mockOrders } from "@/data/orders"
-import { formatChartAxisDate, formatCurrency, formatNumber } from "@/lib/format"
+} from "@/data/dashboard";
+import { useChannelAttribution } from "@/hooks/use-channel-attribution";
+import { mockOrders } from "@/data/orders";
+import {
+  formatChartAxisDate,
+  formatCurrency,
+  formatNumber,
+} from "@/lib/format";
 import {
   isCpaAlert,
   isRoasAlert,
   CPA_ALERT_THRESHOLD,
   ROAS_ALERT_THRESHOLD,
-} from "@/lib/metric-alerts"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+} from "@/lib/metric-alerts";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -58,7 +63,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
 const revenueChartConfig = {
   revenue: {
@@ -68,7 +73,7 @@ const revenueChartConfig = {
       dark: "oklch(0.72 0.18 264)",
     },
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 const composedChartConfig = {
   orders: {
@@ -99,7 +104,7 @@ const composedChartConfig = {
       dark: "oklch(0.62 0.14 145)",
     },
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 const channelBarConfig = {
   revenue: {
@@ -109,41 +114,43 @@ const channelBarConfig = {
       dark: "oklch(0.72 0.16 264)",
     },
   },
-} satisfies ChartConfig
+} satisfies ChartConfig;
 
 export function OverviewPage() {
-  const [ready, setReady] = useState(false)
+  const [ready, setReady] = useState(false);
+  const { mappings, revision } = useChannelAttribution();
 
   useEffect(() => {
-    const t = window.setTimeout(() => setReady(true), 520)
-    return () => window.clearTimeout(t)
-  }, [])
+    const t = window.setTimeout(() => setReady(true), 520);
+    return () => window.clearTimeout(t);
+  }, []);
 
-  const kpis = useMemo(() => computeDashboardKpis(), [])
-  const series = useMemo(() => buildRevenueTimeSeries(14), [])
-  const channelPerf = useMemo(() => buildChannelPerformance(), [])
+  const kpis = useMemo(() => computeDashboardKpis(), []);
+  const series = useMemo(() => buildRevenueTimeSeries(14), []);
+  const channelPerf = useMemo(
+    () => buildChannelPerformance(mappings),
+    [mappings, revision],
+  );
 
   const salesByMacro = useMemo(() => {
-    const m = new Map<string, number>()
+    const m = new Map<string, number>();
     for (const o of mockOrders) {
-      if (o.payment_status !== "paid" || o.order_status === "cancelled") continue
-      m.set(o.channel_macro, (m.get(o.channel_macro) ?? 0) + o.revenue)
+      if (o.payment_status !== "paid" || o.order_status === "cancelled")
+        continue;
+      m.set(o.channel_macro, (m.get(o.channel_macro) ?? 0) + o.revenue);
     }
     return [...m.entries()]
       .map(([channel_macro, revenue]) => ({ channel_macro, revenue }))
-      .sort((a, b) => b.revenue - a.revenue)
-  }, [])
+      .sort((a, b) => b.revenue - a.revenue);
+  }, []);
 
-  const aggCpaAlert = isCpaAlert(kpis.cpa)
-  const aggRoasAlert = isRoasAlert(kpis.roas)
+  const aggCpaAlert = isCpaAlert(kpis.cpa);
+  const aggRoasAlert = isRoasAlert(kpis.roas);
 
   const alertChannels = useMemo(
-    () =>
-      channelPerf.filter(
-        (r) => isCpaAlert(r.cpa) || isRoasAlert(r.roas)
-      ),
-    [channelPerf]
-  )
+    () => channelPerf.filter((r) => isCpaAlert(r.cpa) || isRoasAlert(r.roas)),
+    [channelPerf],
+  );
 
   if (!ready) {
     return (
@@ -159,7 +166,7 @@ export function OverviewPage() {
         </div>
         <Skeleton className="h-72 w-full rounded-xl" />
       </div>
-    )
+    );
   }
 
   return (
@@ -209,6 +216,12 @@ export function OverviewPage() {
           icon={Package}
         />
         <KpiStatCard
+          title="Inversión ads"
+          value={formatCurrency(kpis.ad_spend)}
+          sub="Gasto atribuido a campañas"
+          icon={Wallet}
+        />
+        <KpiStatCard
           title="ROAS"
           value={`${formatNumber(kpis.roas, 2)}×`}
           sub="Retorno sobre inversión publicitaria"
@@ -222,17 +235,12 @@ export function OverviewPage() {
           icon={Target}
           alert={aggCpaAlert ? "cpa" : null}
         />
+
         <KpiStatCard
-          title="Inversión ads"
-          value={formatCurrency(kpis.ad_spend)}
-          sub="Gasto atribuido a campañas"
-          icon={Wallet}
-        />
-        <KpiStatCard
-          title="Leads"
-          value={formatNumber(kpis.leads, 0)}
+          title="Pares vendidos"
+          value={formatNumber(90, 0)}
           sub="Captaciones del periodo"
-          icon={Users}
+          icon={SportShoe}
         />
       </section>
 
@@ -308,65 +316,56 @@ export function OverviewPage() {
             </ChartContainer>
           </CardContent>
         </Card>
-
         <Card className="border-border/80 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-medium">
-              Pedidos vs leads
+              Estado de pedidos
             </CardTitle>
-            <CardDescription>Comparativa diaria</CardDescription>
+            <CardDescription>
+              Distribución en el dataset simulado
+            </CardDescription>
           </CardHeader>
-          <CardContent className="pl-0">
-            <ChartContainer
-              config={composedChartConfig}
-              className="aspect-auto h-[280px] w-full"
-            >
-              <BarChart
-                data={series}
-                margin={{ left: 8, right: 8, top: 8, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={formatChartAxisDate}
-                  tickMargin={8}
-                />
-                <YAxis width={32} tickLine={false} axisLine={false} />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      labelFormatter={(_, p) =>
-                        p[0]?.payload?.date
-                          ? formatChartAxisDate(p[0].payload.date as string)
-                          : ""
-                      }
-                    />
-                  }
-                />
-                <Bar
-                  name="Pedidos"
-                  dataKey="orders"
-                  fill="var(--color-orders)"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={28}
-                />
-                <Bar
-                  name="Leads"
-                  dataKey="leads"
-                  fill="var(--color-leads)"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={28}
-                />
-                <Legend />
-              </BarChart>
-            </ChartContainer>
+          <CardContent className="space-y-4">
+            <div className="flex h-3 overflow-hidden rounded-full bg-muted">
+              <div
+                className="bg-emerald-500/90 transition-all"
+                style={{
+                  width: `${(kpis.orders_paid / Math.max(kpis.orders_paid + kpis.orders_pending + kpis.orders_cancelled, 1)) * 100}%`,
+                }}
+                title="Pagados"
+              />
+              <div
+                className="bg-amber-500/85"
+                style={{
+                  width: `${(kpis.orders_pending / Math.max(kpis.orders_paid + kpis.orders_pending + kpis.orders_cancelled, 1)) * 100}%`,
+                }}
+              />
+              <div
+                className="bg-destructive/80"
+                style={{
+                  width: `${(kpis.orders_cancelled / Math.max(kpis.orders_paid + kpis.orders_pending + kpis.orders_cancelled, 1)) * 100}%`,
+                }}
+              />
+            </div>
+            <div className="flex flex-wrap gap-3 text-sm">
+              <Badge variant="secondary" className="gap-1.5 font-normal">
+                <span className="size-2 rounded-full bg-emerald-500" />
+                Pagados: {formatNumber(kpis.orders_paid, 0)}
+              </Badge>
+              <Badge variant="secondary" className="gap-1.5 font-normal">
+                <span className="size-2 rounded-full bg-amber-500" />
+                Pendientes: {formatNumber(kpis.orders_pending, 0)}
+              </Badge>
+              <Badge variant="secondary" className="gap-1.5 font-normal">
+                <span className="size-2 rounded-full bg-destructive" />
+                Cancelados: {formatNumber(kpis.orders_cancelled, 0)}
+              </Badge>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="border-border/80 shadow-sm">
+      {/* <Card className="border-border/80 shadow-sm">
         <CardHeader>
           <CardTitle className="text-base font-medium">
             Inversión vs ingresos
@@ -431,55 +430,64 @@ export function OverviewPage() {
             </ComposedChart>
           </ChartContainer>
         </CardContent>
-      </Card>
+      </Card> */}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* <div className="grid gap-6 lg:grid-cols-2">
         <Card className="border-border/80 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-medium">
-              Estado de pedidos
+              Pedidos vs leads
             </CardTitle>
-            <CardDescription>Distribución en el dataset simulado</CardDescription>
+            <CardDescription>Comparativa diaria</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex h-3 overflow-hidden rounded-full bg-muted">
-              <div
-                className="bg-emerald-500/90 transition-all"
-                style={{
-                  width: `${(kpis.orders_paid / Math.max(kpis.orders_paid + kpis.orders_pending + kpis.orders_cancelled, 1)) * 100}%`,
-                }}
-                title="Pagados"
-              />
-              <div
-                className="bg-amber-500/85"
-                style={{
-                  width: `${(kpis.orders_pending / Math.max(kpis.orders_paid + kpis.orders_pending + kpis.orders_cancelled, 1)) * 100}%`,
-                }}
-              />
-              <div
-                className="bg-destructive/80"
-                style={{
-                  width: `${(kpis.orders_cancelled / Math.max(kpis.orders_paid + kpis.orders_pending + kpis.orders_cancelled, 1)) * 100}%`,
-                }}
-              />
-            </div>
-            <div className="flex flex-wrap gap-3 text-sm">
-              <Badge variant="secondary" className="gap-1.5 font-normal">
-                <span className="size-2 rounded-full bg-emerald-500" />
-                Pagados: {formatNumber(kpis.orders_paid, 0)}
-              </Badge>
-              <Badge variant="secondary" className="gap-1.5 font-normal">
-                <span className="size-2 rounded-full bg-amber-500" />
-                Pendientes: {formatNumber(kpis.orders_pending, 0)}
-              </Badge>
-              <Badge variant="secondary" className="gap-1.5 font-normal">
-                <span className="size-2 rounded-full bg-destructive" />
-                Cancelados: {formatNumber(kpis.orders_cancelled, 0)}
-              </Badge>
-            </div>
+          <CardContent className="pl-0">
+            <ChartContainer
+              config={composedChartConfig}
+              className="aspect-auto h-[280px] w-full"
+            >
+              <BarChart
+                data={series}
+                margin={{ left: 8, right: 8, top: 8, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={formatChartAxisDate}
+                  tickMargin={8}
+                />
+                <YAxis width={32} tickLine={false} axisLine={false} />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      labelFormatter={(_, p) =>
+                        p[0]?.payload?.date
+                          ? formatChartAxisDate(p[0].payload.date as string)
+                          : ""
+                      }
+                    />
+                  }
+                />
+                <Bar
+                  name="Pedidos"
+                  dataKey="orders"
+                  fill="var(--color-orders)"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={28}
+                />
+                <Bar
+                  name="Leads"
+                  dataKey="leads"
+                  fill="var(--color-leads)"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={28}
+                />
+                <Legend />
+              </BarChart>
+            </ChartContainer>
           </CardContent>
         </Card>
-
         <Card className="border-border/80 shadow-sm">
           <CardHeader>
             <CardTitle className="text-base font-medium">
@@ -527,7 +535,7 @@ export function OverviewPage() {
             </ChartContainer>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       <Card className="border-border/80 shadow-sm">
         <CardHeader className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
@@ -563,7 +571,9 @@ export function OverviewPage() {
               </TableHeader>
               <TableBody>
                 {alertChannels.map((row) => (
-                  <TableRow key={`${row.channel_macro}-${row.channel_detallado}`}>
+                  <TableRow
+                    key={`${row.channel_macro}-${row.channel_detallado}`}
+                  >
                     <TableCell className="font-medium">
                       {row.channel_macro}
                     </TableCell>
@@ -603,5 +613,5 @@ export function OverviewPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

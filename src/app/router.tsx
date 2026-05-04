@@ -7,6 +7,7 @@ import { OverviewPage } from "@/modules/dashboard/overview-page"
 import { MarketingPage } from "@/modules/marketing/marketing-page"
 import { SalesPage } from "@/modules/sales/sales-page"
 import { SettingsPage } from "@/modules/settings/settings-page"
+import { ParametrosCanalesPage } from "@/modules/parametros-canales/parametros-canales-page"
 
 function RootRedirect() {
   const { session } = useAuth()
@@ -21,6 +22,10 @@ export function AppRoutes() {
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<OverviewPage />} />
           <Route path="/dashboard/marketing" element={<MarketingPage />} />
+          <Route
+            path="/dashboard/parametros-canales"
+            element={<ParametrosCanalesPage />}
+          />
           <Route path="/dashboard/sales" element={<SalesPage />} />
           <Route path="/dashboard/settings" element={<SettingsPage />} />
         </Route>
