@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import type { DateRange } from "react-day-picker"
 import {
   Bar,
   BarChart,
@@ -18,7 +19,11 @@ import {
 } from "@/components/ui/chart"
 import { mockAdSpend, mockLeads } from "@/data/dashboard"
 import { useChannelAttribution } from "@/hooks/use-channel-attribution"
-import { filterByDateRange } from "@/lib/date-filters"
+import {
+  defaultDateRange,
+  filterByStrictRange,
+  strictRangeFromDateRange,
+} from "@/lib/date-range"
 import { resolveAdSpendChannels } from "@/lib/resolve-ad-attribution"
 import type { AdChannelMappingRow } from "@/types/ad-channel-mapping"
 import { formatCurrency, formatNumber } from "@/lib/format"
@@ -28,7 +33,7 @@ import {
   CPA_ALERT_THRESHOLD,
   ROAS_ALERT_THRESHOLD,
 } from "@/lib/metric-alerts"
-import type { ChannelPerformanceRow, TimeRangeFilter } from "@/types/analytics"
+import type { ChannelPerformanceRow } from "@/types/analytics"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -38,13 +43,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { DateRangePicker } from "@/components/ui/date-picker"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -149,7 +148,15 @@ function stableExtra(seed: string, mod: number) {
 
 export function MarketingPage() {
   const { mappings, revision } = useChannelAttribution()
-  const [range, setRange] = useState<TimeRangeFilter>("month")
+  const dr0 = defaultDateRange()
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: dr0.from,
+    to: dr0.to,
+  })
+  const strictRange = useMemo(
+    () => strictRangeFromDateRange(dateRange),
+    [dateRange],
+  )
   const [ready, setReady] = useState(false)
   const [drill, setDrill] = useState<ChannelPerformanceRow | null>(null)
 
@@ -159,12 +166,12 @@ export function MarketingPage() {
   }, [])
 
   const filteredAds = useMemo(
-    () => filterByDateRange(mockAdSpend, range),
-    [range]
+    () => filterByStrictRange(mockAdSpend, strictRange),
+    [strictRange]
   )
   const filteredLeads = useMemo(
-    () => filterByDateRange(mockLeads, range),
-    [range]
+    () => filterByStrictRange(mockLeads, strictRange),
+    [strictRange]
   )
 
   const rows = useMemo(
@@ -220,21 +227,19 @@ export function MarketingPage() {
             drill-down en la tabla.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Filter className="size-4 text-muted-foreground" aria-hidden />
-          <Select
-            value={range}
-            onValueChange={(v) => setRange(v as TimeRangeFilter)}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Periodo" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="day">Último día</SelectItem>
-              <SelectItem value="week">Última semana</SelectItem>
-              <SelectItem value="month">Último mes</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[300px]">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Filter className="size-4 shrink-0" aria-hidden />
+            <span className="text-xs font-medium tracking-wide uppercase">
+              Periodo
+            </span>
+          </div>
+          <DateRangePicker
+            value={dateRange}
+            onChange={setDateRange}
+            className="w-full"
+            numberOfMonths={2}
+          />
         </div>
       </div>
 

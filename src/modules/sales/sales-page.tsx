@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import type { DateRange } from "react-day-picker"
 import { mockOrders } from "@/data/orders"
 import type { ChannelMacro, OrderRecord, OrderStatus, PaymentStatus } from "@/types/analytics"
 import { formatCurrency, formatShortDate } from "@/lib/format"
@@ -36,6 +37,12 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Separator } from "@/components/ui/separator"
+import { DateRangePicker } from "@/components/ui/date-picker"
+import {
+  defaultDateRange,
+  strictRangeFromDateRange,
+  isIsoDateInRange,
+} from "@/lib/date-range"
 
 const ALL = "__all__"
 
@@ -80,10 +87,18 @@ const macros: ChannelMacro[] = [
 ]
 
 export function SalesPage() {
+  const dr0 = defaultDateRange()
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: dr0.from,
+    to: dr0.to,
+  })
+  const strictRange = useMemo(
+    () => strictRangeFromDateRange(dateRange),
+    [dateRange],
+  )
   const [ready, setReady] = useState(false)
   const [orderStatus, setOrderStatus] = useState<string>(ALL)
   const [channel, setChannel] = useState<string>(ALL)
-  const [datePreset, setDatePreset] = useState<string>("45")
   const [selected, setSelected] = useState<OrderRecord | null>(null)
 
   useEffect(() => {
@@ -92,18 +107,12 @@ export function SalesPage() {
   }, [])
 
   const filtered = useMemo(() => {
-    const days = Number(datePreset) || 45
-    const cutoff = new Date()
-    cutoff.setHours(0, 0, 0, 0)
-    cutoff.setDate(cutoff.getDate() - days)
-
     return mockOrders.filter((o) => {
       if (orderStatus !== ALL && o.order_status !== orderStatus) return false
       if (channel !== ALL && o.channel_macro !== channel) return false
-      const d = new Date(o.date)
-      return d >= cutoff
+      return isIsoDateInRange(o.date, strictRange)
     })
-  }, [orderStatus, channel, datePreset])
+  }, [orderStatus, channel, strictRange])
 
   if (!ready) {
     return (
@@ -129,10 +138,19 @@ export function SalesPage() {
         <CardHeader className="pb-4">
           <CardTitle className="text-base font-medium">Filtros</CardTitle>
           <CardDescription>
-            Refina la tabla por estado, canal macro o antigüedad.
+            Refina la tabla por fechas, estado y canal macro.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+          <div className="grid w-full min-w-0 gap-2 sm:max-w-[320px]">
+            <Label>Fechas</Label>
+            <DateRangePicker
+              value={dateRange}
+              onChange={setDateRange}
+              className="w-full"
+              numberOfMonths={2}
+            />
+          </div>
           <div className="grid gap-2">
             <Label htmlFor="f-order">Estado del pedido</Label>
             <Select value={orderStatus} onValueChange={setOrderStatus}>
@@ -164,19 +182,6 @@ export function SalesPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="f-date">Periodo</Label>
-            <Select value={datePreset} onValueChange={setDatePreset}>
-              <SelectTrigger id="f-date" className="w-[200px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">Últimos 7 días</SelectItem>
-                <SelectItem value="30">Últimos 30 días</SelectItem>
-                <SelectItem value="45">Últimos 45 días</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <Button
             type="button"
             variant="outline"
@@ -184,7 +189,8 @@ export function SalesPage() {
             onClick={() => {
               setOrderStatus(ALL)
               setChannel(ALL)
-              setDatePreset("45")
+              const d = defaultDateRange()
+              setDateRange({ from: d.from, to: d.to })
             }}
           >
             Limpiar filtros
@@ -215,7 +221,8 @@ export function SalesPage() {
                 onClick={() => {
                   setOrderStatus(ALL)
                   setChannel(ALL)
-                  setDatePreset("45")
+                  const d = defaultDateRange()
+                  setDateRange({ from: d.from, to: d.to })
                 }}
               >
                 Restablecer

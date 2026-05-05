@@ -36,14 +36,14 @@ const nav = [
     icon: Megaphone,
   },
   {
-    title: "Parámetros de canales",
-    href: "/dashboard/parametros-canales",
-    icon: GitBranch,
-  },
-  {
     title: "Ventas",
     href: "/dashboard/sales",
     icon: ShoppingCart,
+  },
+  {
+    title: "Parámetros de canales",
+    href: "/dashboard/parametros-canales",
+    icon: GitBranch,
   },
   {
     title: "Ajustes",

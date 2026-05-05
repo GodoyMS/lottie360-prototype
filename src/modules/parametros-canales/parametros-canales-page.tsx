@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react"
+import type { DateRange } from "react-day-picker"
 import {
   GitBranch,
   Pencil,
@@ -61,6 +62,13 @@ import {
 } from "@/components/ui/table"
 import { Separator } from "@/components/ui/separator"
 import { formatDateTime } from "@/lib/format"
+import { mockAdSpend } from "@/data/ads"
+import { DateRangePicker } from "@/components/ui/date-picker"
+import {
+  defaultDateRange,
+  filterByStrictRange,
+  strictRangeFromDateRange,
+} from "@/lib/date-range"
 
 const MACRO_FILTER_ALL = "__all__"
 
@@ -86,11 +94,29 @@ export function ParametrosCanalesPage() {
   const [deleteTarget, setDeleteTarget] = useState<AdChannelMappingRow | null>(
     null
   )
+  const dr0 = defaultDateRange()
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: dr0.from,
+    to: dr0.to,
+  })
+  const strictRange = useMemo(
+    () => strictRangeFromDateRange(dateRange),
+    [dateRange],
+  )
+
+  const adIdsWithSpendInRange = useMemo(() => {
+    const ads = filterByStrictRange(mockAdSpend, strictRange)
+    return new Set(ads.map((a) => a.ad_id))
+  }, [strictRange])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return [...mappings]
       .filter((row) => {
+        const existsInSpend = mockAdSpend.some((a) => a.ad_id === row.ad_id)
+        if (existsInSpend && !adIdsWithSpendInRange.has(row.ad_id)) {
+          return false
+        }
         if (macroFilter !== MACRO_FILTER_ALL && row.canal_macro !== macroFilter)
           return false
         if (!q) return true
@@ -101,7 +127,7 @@ export function ParametrosCanalesPage() {
         )
       })
       .sort((a, b) => a.ad_id.localeCompare(b.ad_id))
-  }, [mappings, query, macroFilter])
+  }, [mappings, query, macroFilter, adIdsWithSpendInRange])
 
   function openCreate() {
     setEditing(null)
@@ -190,7 +216,16 @@ export function ParametrosCanalesPage() {
         <CardHeader className="gap-4 space-y-0 pb-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-end">
-              <div className="grid w-full min-w-0 flex-1 gap-2 sm:max-w-xs">
+              <div className="grid w-full min-w-0 gap-2 sm:max-w-[min(100%,320px)]">
+                <Label>Fechas (gasto con actividad)</Label>
+                <DateRangePicker
+                  value={dateRange}
+                  onChange={setDateRange}
+                  className="w-full"
+                  numberOfMonths={2}
+                />
+              </div>
+              {/* <div className="grid w-full min-w-0 flex-1 gap-2 sm:max-w-xs">
                 <Label htmlFor="search-ad">Buscar</Label>
                 <div className="relative">
                   <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -202,7 +237,7 @@ export function ParametrosCanalesPage() {
                     className="h-9 pl-9"
                   />
                 </div>
-              </div>
+              </div> */}
               <div className="grid w-full gap-2 sm:w-52">
                 <Label htmlFor="filter-macro">Canal macro</Label>
                 <Select value={macroFilter} onValueChange={setMacroFilter}>

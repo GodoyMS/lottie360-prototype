@@ -7,69 +7,85 @@ import type { AdChannelMappingRow } from "@/types/ad-channel-mapping"
 import { mockAdSpend } from "@/data/ads"
 import { mockLeads } from "@/data/leads"
 import { mockOrders } from "@/data/orders"
+import {
+  eachIsoDayInRange,
+  filterByStrictRange,
+  type StrictDateRange,
+} from "@/lib/date-range"
 import { resolveAdSpendChannels } from "@/lib/resolve-ad-attribution"
 
-export function computeDashboardKpis(): DashboardKpis {
-  const revenue = mockOrders
+export function computeDashboardKpis(range: StrictDateRange): DashboardKpis {
+  const orders = filterByStrictRange(mockOrders, range)
+  const leadsList = filterByStrictRange(mockLeads, range)
+  const ads = filterByStrictRange(mockAdSpend, range)
+
+  const revenue = orders
     .filter((o) => o.payment_status === "paid" && o.order_status !== "cancelled")
     .reduce((a, o) => a + o.revenue, 0)
 
-  const orders = mockOrders.filter(
+  const production_cost = orders.reduce((a, o) => a + o.cost, 0)
+
+  const orderCount = orders.filter(
     (o) => o.order_status === "completed" || o.order_status === "pending"
   ).length
 
-  const ad_spend = mockAdSpend.reduce((a, x) => a + x.spend, 0)
-  const leads = mockLeads.length
+  const ad_spend = ads.reduce((a, x) => a + x.spend, 0)
+  const leads = leadsList.length
 
   const roas = ad_spend > 0 ? revenue / ad_spend : 0
   const cpa = leads > 0 ? ad_spend / leads : 0
 
-  const orders_paid = mockOrders.filter((o) => o.payment_status === "paid").length
-  const orders_pending = mockOrders.filter(
+  const orders_paid = orders.filter((o) => o.payment_status === "paid").length
+  const orders_pending = orders.filter(
     (o) => o.payment_status === "pending"
   ).length
-  const orders_cancelled = mockOrders.filter(
+  const orders_cancelled = orders.filter(
     (o) => o.order_status === "cancelled"
   ).length
 
+  const pairs_sold = orders
+    .filter((o) => o.payment_status === "paid" && o.order_status !== "cancelled")
+    .reduce((a, o) => a + o.pairs, 0)
+
   return {
     revenue,
-    orders,
+    orders: orderCount,
     roas,
     cpa,
     ad_spend,
+    production_cost,
     leads,
     orders_paid,
     orders_pending,
     orders_cancelled,
+    pairs_sold,
   }
 }
 
-/** Serie diaria sintética coherente con KPIs (últimos 14 días) */
-export function buildRevenueTimeSeries(days = 14): TimeSeriesPoint[] {
-  const kpis = computeDashboardKpis()
-  const today = new Date()
-  const points: TimeSeriesPoint[] = []
+/** Serie diaria alineada al rango; proporcional a KPIs del mismo periodo (sin aleatoriedad). */
+export function buildRevenueTimeSeries(
+  range: StrictDateRange,
+  kpis: DashboardKpis
+): TimeSeriesPoint[] {
+  const days = eachIsoDayInRange(range)
+  const n = Math.max(days.length, 1)
 
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - i)
-    const iso = d.toISOString().slice(0, 10)
-    const w = 0.55 + 0.45 * Math.sin((i / 4) * Math.PI) + Math.random() * 0.12
-    const revenue = Math.round((kpis.revenue / days) * w)
+  return days.map((iso, i) => {
+    const w =
+      0.55 +
+      0.45 * Math.sin((i / Math.max(n / 4, 1)) * Math.PI) * (i % 2 === 0 ? 1 : 0.92)
+    const revenue = Math.round((kpis.revenue / n) * w)
     const orders = Math.max(
-      1,
-      Math.round((kpis.orders / days) * w * (0.85 + Math.random() * 0.3))
+      0,
+      Math.round((kpis.orders / n) * w * 0.95)
     )
     const leads = Math.max(
-      1,
-      Math.round((kpis.leads / days) * w * (0.9 + Math.random() * 0.25))
+      0,
+      Math.round((kpis.leads / n) * w * 0.95)
     )
-    const spend = Math.round((kpis.ad_spend / days) * w * (0.95 + Math.random() * 0.2))
-    points.push({ date: iso, revenue, orders, leads, spend })
-  }
-
-  return points
+    const spend = Math.round((kpis.ad_spend / n) * w * 0.95)
+    return { date: iso, revenue, orders, leads, spend }
+  })
 }
 
 function rowKey(m: string, d: string) {
@@ -77,9 +93,13 @@ function rowKey(m: string, d: string) {
 }
 
 export function buildChannelPerformance(
-  adChannelMappings: readonly AdChannelMappingRow[]
+  adChannelMappings: readonly AdChannelMappingRow[],
+  range: StrictDateRange
 ): ChannelPerformanceRow[] {
   const keys = new Map<string, ChannelPerformanceRow>()
+  const ads = filterByStrictRange(mockAdSpend, range)
+  const leadsList = filterByStrictRange(mockLeads, range)
+  const orders = filterByStrictRange(mockOrders, range)
 
   function ensure(
     macro: ChannelPerformanceRow["channel_macro"],
@@ -103,7 +123,7 @@ export function buildChannelPerformance(
     return cur
   }
 
-  for (const ad of mockAdSpend) {
+  for (const ad of ads) {
     const { channel_macro, channel_detallado } = resolveAdSpendChannels(
       ad,
       adChannelMappings
@@ -113,12 +133,12 @@ export function buildChannelPerformance(
     cur.revenue += ad.revenue_attributed
   }
 
-  for (const lead of mockLeads) {
+  for (const lead of leadsList) {
     const cur = ensure(lead.channel_macro, lead.channel_detallado)
     cur.leads += 1
   }
 
-  for (const order of mockOrders) {
+  for (const order of orders) {
     if (order.order_status !== "completed") continue
     const cur = ensure(order.channel_macro, order.channel_detallado)
     cur.orders += 1

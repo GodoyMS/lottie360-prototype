@@ -57,7 +57,7 @@ export function AppHeader() {
         />
       </div>
       <div className="ml-auto flex items-center gap-1.5">
-        <Tooltip>
+        {/* <Tooltip>
           <TooltipTrigger asChild>
             <Link
               to="/dashboard/parametros-canales"
@@ -75,7 +75,7 @@ export function AppHeader() {
           <TooltipContent side="bottom" className="max-w-xs text-xs">
             Mapeos ad_id → canal. Última actualización: {formatDateTime(updatedAt)}
           </TooltipContent>
-        </Tooltip>
+        </Tooltip> */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

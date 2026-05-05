@@ -75,11 +75,16 @@ export interface DashboardKpis {
   orders: number
   roas: number
   cpa: number
+  /** Gasto publicitario en el periodo (para ROAS / CPA) */
   ad_spend: number
+  /** Suma de coste de producción (`cost` en pedidos) en el periodo */
+  production_cost: number
   leads: number
   orders_paid: number
   orders_pending: number
   orders_cancelled: number
+  /** Pares vendidos (pedidos pagados no cancelados) */
+  pairs_sold: number
 }
 
 export type TimeRangeFilter = "day" | "week" | "month"

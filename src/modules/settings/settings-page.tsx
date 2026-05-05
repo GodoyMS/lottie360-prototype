@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { Bell, Palette, User } from "lucide-react"
+import { useTheme } from "next-themes"
+import { Bell, Monitor, Moon, Palette, Sun, User } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -18,11 +19,33 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/hooks/use-auth"
+import { cn } from "@/lib/utils"
+
+const themeModes = [
+  {
+    value: "light" as const,
+    title: "Claro",
+    description: "Interfaz luminosa para entornos con buena luz.",
+    icon: Sun,
+  },
+  {
+    value: "dark" as const,
+    title: "Oscuro",
+    description: "Reduce fatiga visual en sesiones largas.",
+    icon: Moon,
+  },
+  {
+    value: "system" as const,
+    title: "Sistema",
+    description: "Sigue la preferencia del dispositivo.",
+    icon: Monitor,
+  },
+]
 
 export function SettingsPage() {
   const { session } = useAuth()
+  const { theme, setTheme } = useTheme()
   const [emailNotif, setEmailNotif] = useState(true)
-  const [slackDigest, setSlackDigest] = useState(false)
   const [freq, setFreq] = useState("daily")
 
   return (
@@ -84,19 +107,6 @@ export function SettingsPage() {
             />
           </div>
           <Separator />
-          <div className="flex items-center justify-between gap-4">
-            <div className="space-y-0.5">
-              <Label htmlFor="slack-digest">Digest a Slack</Label>
-              <p className="text-xs text-muted-foreground">
-                Resumen diario al canal #growth
-              </p>
-            </div>
-            <Switch
-              id="slack-digest"
-              checked={slackDigest}
-              onCheckedChange={setSlackDigest}
-            />
-          </div>
           <div className="grid gap-2">
             <Label htmlFor="freq">Frecuencia del resumen</Label>
             <Select value={freq} onValueChange={setFreq}>
@@ -120,16 +130,46 @@ export function SettingsPage() {
             <CardTitle className="text-base font-medium">Apariencia</CardTitle>
           </div>
           <CardDescription>
-            El tema claro / oscuro se controla desde la barra superior.
+            Elige cómo se muestra Lottie 360. Se guarda en{" "}
+            <code className="rounded bg-muted px-1 py-0.5 text-xs">
+              localStorage
+            </code>{" "}
+            (<code className="rounded bg-muted px-1 py-0.5 text-xs">
+              lottie360-theme
+            </code>
+            ).
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          La preferencia se guarda en el navegador (
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">
-            localStorage
-          </code>
-          , clave <code className="rounded bg-muted px-1 py-0.5 text-xs">lottie360-theme</code>
-          ).
+        <CardContent>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {themeModes.map((m) => {
+              const resolved = theme ?? "system"
+              const active = resolved === m.value
+              const Icon = m.icon
+              return (
+                <button
+                  key={m.value}
+                  type="button"
+                  onClick={() => setTheme(m.value)}
+                  className={cn(
+                    "flex flex-col gap-2 rounded-xl border-2 p-4 text-left transition-all duration-200",
+                    "hover:border-primary/40 hover:shadow-md",
+                    active
+                      ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20"
+                      : "border-border/70 bg-card"
+                  )}
+                >
+                  <span className="flex size-10 items-center justify-center rounded-lg bg-muted text-foreground">
+                    <Icon className="size-5" aria-hidden />
+                  </span>
+                  <span className="text-sm font-semibold">{m.title}</span>
+                  <span className="text-xs leading-snug text-muted-foreground">
+                    {m.description}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </CardContent>
       </Card>
     </div>
