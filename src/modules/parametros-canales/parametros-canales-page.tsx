@@ -5,7 +5,6 @@ import {
   Pencil,
   Plus,
   RotateCcw,
-  Search,
   Trash2,
 } from "lucide-react"
 import { useChannelAttribution } from "@/hooks/use-channel-attribution"
@@ -83,7 +82,6 @@ export function ParametrosCanalesPage() {
     resetToSeed,
   } = useChannelAttribution()
 
-  const [query, setQuery] = useState("")
   const [macroFilter, setMacroFilter] = useState<string>(MACRO_FILTER_ALL)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<AdChannelMappingRow | null>(null)
@@ -110,7 +108,6 @@ export function ParametrosCanalesPage() {
   }, [strictRange])
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
     return [...mappings]
       .filter((row) => {
         const existsInSpend = mockAdSpend.some((a) => a.ad_id === row.ad_id)
@@ -119,15 +116,10 @@ export function ParametrosCanalesPage() {
         }
         if (macroFilter !== MACRO_FILTER_ALL && row.canal_macro !== macroFilter)
           return false
-        if (!q) return true
-        return (
-          row.ad_id.toLowerCase().includes(q) ||
-          row.canal_macro.toLowerCase().includes(q) ||
-          row.canal_detallado.toLowerCase().includes(q)
-        )
+        return true
       })
       .sort((a, b) => a.ad_id.localeCompare(b.ad_id))
-  }, [mappings, query, macroFilter, adIdsWithSpendInRange])
+  }, [mappings, macroFilter, adIdsWithSpendInRange])
 
   function openCreate() {
     setEditing(null)
@@ -156,7 +148,7 @@ export function ParametrosCanalesPage() {
         canal_macro: pair.canal_macro,
         canal_detallado: pair.canal_detallado,
       })
-      if (!res.ok) setFormError(res.error)
+      if (res.ok === false) setFormError(res.error)
       else setDialogOpen(false)
       return
     }
@@ -165,7 +157,7 @@ export function ParametrosCanalesPage() {
       canal_macro: pair.canal_macro,
       canal_detallado: pair.canal_detallado,
     })
-    if (!res.ok) setFormError(res.error)
+    if (res.ok === false) setFormError(res.error)
     else setDialogOpen(false)
   }
 

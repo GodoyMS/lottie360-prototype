@@ -1,7 +1,6 @@
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { useTheme } from "next-themes"
 import {
-  GitBranch,
   LogOut,
   Monitor,
   Moon,
@@ -25,18 +24,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/hooks/use-auth"
-import { useChannelAttribution } from "@/hooks/use-channel-attribution"
-import { Badge } from "@/components/ui/badge"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { formatDateTime } from "@/lib/format"
 
 export function AppHeader() {
   const { session, logout } = useAuth()
-  const { revision, updatedAt } = useChannelAttribution()
   const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
 
