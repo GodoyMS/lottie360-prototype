@@ -1,21 +1,55 @@
 import {
   eachDayOfInterval,
   endOfDay,
+  endOfMonth,
   format,
   isWithinInterval,
   parseISO,
   startOfDay,
+  startOfMonth,
   subDays,
+  subMonths,
 } from "date-fns"
 import type { DateRange } from "react-day-picker"
 
 /** Rango con inicio y fin inclusivos (normalizado a día). */
 export type StrictDateRange = { from: Date; to: Date }
 
+/** Rango del mes actual (día 1 del mes → hoy). */
+export function currentMonthRange(): StrictDateRange {
+  const now = new Date()
+  return { from: startOfDay(startOfMonth(now)), to: endOfDay(now) }
+}
+
+/** Rango de ayer (00:00 → 23:59). */
+export function yesterdayRange(): StrictDateRange {
+  const y = subDays(new Date(), 1)
+  return { from: startOfDay(y), to: endOfDay(y) }
+}
+
+/** Rango del mes pasado (día 1 → último día). */
+export function prevMonthRange(): StrictDateRange {
+  const lm = subMonths(new Date(), 1)
+  return { from: startOfDay(startOfMonth(lm)), to: endOfDay(endOfMonth(lm)) }
+}
+
+/** Rango de hoy (00:00 → 23:59). */
+export function todayRange(): StrictDateRange {
+  const now = new Date()
+  return { from: startOfDay(now), to: endOfDay(now) }
+}
+
+/** Devuelve el periodo previo equivalente (misma duración, inmediatamente anterior). */
+export function previousPeriod(range: StrictDateRange): StrictDateRange {
+  const ms = range.to.getTime() - range.from.getTime()
+  const to = new Date(range.from.getTime() - 1)
+  const from = new Date(to.getTime() - ms)
+  return { from: startOfDay(from), to: endOfDay(to) }
+}
+
+/** Por defecto: mes actual. */
 export function defaultDateRange(): StrictDateRange {
-  const to = endOfDay(new Date())
-  const from = startOfDay(subDays(to, 44))
-  return { from, to }
+  return currentMonthRange()
 }
 
 /** Convierte selección del calendario a rango cerrado. */

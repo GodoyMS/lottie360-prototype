@@ -86,8 +86,8 @@ export function ParametrosCanalesPage() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<AdChannelMappingRow | null>(null)
   const [formAdId, setFormAdId] = useState("")
-  const [formMacro, setFormMacro] = useState<ChannelMacro>("Paid Social")
-  const [formDet, setFormDet] = useState<ChannelDetallado>("Meta Ads")
+  const [formMacro, setFormMacro] = useState<ChannelMacro>("Meta")
+  const [formDet, setFormDet] = useState<ChannelDetallado>("120243819860760063")
   const [formError, setFormError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<AdChannelMappingRow | null>(
     null
@@ -124,8 +124,8 @@ export function ParametrosCanalesPage() {
   function openCreate() {
     setEditing(null)
     setFormAdId("")
-    setFormMacro("Paid Social")
-    setFormDet("Meta Ads")
+    setFormMacro("Meta")
+    setFormDet("120243819860760063")
     setFormError(null)
     setDialogOpen(true)
   }

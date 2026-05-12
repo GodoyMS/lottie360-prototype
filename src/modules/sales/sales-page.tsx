@@ -78,13 +78,7 @@ const orderVariant: Record<
   refunded: "outline",
 }
 
-const macros: ChannelMacro[] = [
-  "Paid Social",
-  "Search",
-  "Marketplace",
-  "Organic",
-  "Email",
-]
+const macros: ChannelMacro[] = ["Shopify", "Meta", "Kommo"]
 
 export function SalesPage() {
   const dr0 = defaultDateRange()

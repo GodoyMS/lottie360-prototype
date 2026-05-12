@@ -1,19 +1,22 @@
-export type ChannelMacro =
-  | "Paid Social"
-  | "Search"
-  | "Marketplace"
-  | "Organic"
-  | "Email"
+export type ChannelMacro = "Shopify" | "Meta" | "Kommo"
 
 export type ChannelDetallado =
-  | "Meta Ads"
-  | "TikTok Ads"
-  | "Google Ads"
-  | "Amazon SP"
-  | "SEO / Contenido"
-  | "CRM Email"
-  | "Influencers"
-  | "YouTube Ads"
+  // Shopify channels
+  | "wsp"
+  | "cambio"
+  | "tiktok"
+  | "TB13"
+  | "instagram"
+  | "referidos"
+  // Meta ad IDs
+  | "120243819860760063"
+  | "120243819860780063"
+  | "120243876956030063"
+  | "120243884310180063"
+  // Kommo channels
+  | "T72045"
+  | "TMR14"
+  | "Etiquetas de Lead"
 
 export type PaymentStatus = "paid" | "pending" | "failed"
 
@@ -41,7 +44,7 @@ export interface LeadRecord {
 
 export interface AdSpendRecord {
   id: string
-  /** Identificador de anuncio/campaña; mapeado en Parámetros de canales */
+  /** Identificador de anuncio/campaña */
   ad_id: string
   date: string
   channel_macro: ChannelMacro
@@ -85,6 +88,18 @@ export interface DashboardKpis {
   orders_cancelled: number
   /** Pares vendidos (pedidos pagados no cancelados) */
   pairs_sold: number
+  /** Tasa de conversión leads → pedidos pagados (0–1) */
+  conversion_rate: number
+}
+
+export interface DailyComparativoRow {
+  date: string
+  ventas: number
+  canal: string
+  pedidos: number
+  inversion: number
+  cpa: number
+  roas: number
 }
 
 export type TimeRangeFilter = "day" | "week" | "month"

@@ -1,5 +1,6 @@
 import type {
   ChannelPerformanceRow,
+  DailyComparativoRow,
   DashboardKpis,
   TimeSeriesPoint,
 } from "@/types/analytics"
@@ -14,10 +15,27 @@ import {
 } from "@/lib/date-range"
 import { resolveAdSpendChannels } from "@/lib/resolve-ad-attribution"
 
-export function computeDashboardKpis(range: StrictDateRange): DashboardKpis {
-  const orders = filterByStrictRange(mockOrders, range)
-  const leadsList = filterByStrictRange(mockLeads, range)
-  const ads = filterByStrictRange(mockAdSpend, range)
+function matchCanal<T extends { channel_macro: string }>(
+  item: T,
+  canales: string[] | undefined
+): boolean {
+  if (!canales || canales.length === 0) return true
+  return canales.includes(item.channel_macro)
+}
+
+export function computeDashboardKpis(
+  range: StrictDateRange,
+  canales?: string[]
+): DashboardKpis {
+  const orders = filterByStrictRange(mockOrders, range).filter((o) =>
+    matchCanal(o, canales)
+  )
+  const leadsList = filterByStrictRange(mockLeads, range).filter((l) =>
+    matchCanal(l, canales)
+  )
+  const ads = filterByStrictRange(mockAdSpend, range).filter((a) =>
+    matchCanal(a, canales)
+  )
 
   const revenue = orders
     .filter((o) => o.payment_status === "paid" && o.order_status !== "cancelled")
@@ -47,6 +65,8 @@ export function computeDashboardKpis(range: StrictDateRange): DashboardKpis {
     .filter((o) => o.payment_status === "paid" && o.order_status !== "cancelled")
     .reduce((a, o) => a + o.pairs, 0)
 
+  const conversion_rate = leads > 0 ? orders_paid / leads : 0
+
   return {
     revenue,
     orders: orderCount,
@@ -59,6 +79,7 @@ export function computeDashboardKpis(range: StrictDateRange): DashboardKpis {
     orders_pending,
     orders_cancelled,
     pairs_sold,
+    conversion_rate,
   }
 }
 
@@ -73,19 +94,73 @@ export function buildRevenueTimeSeries(
   return days.map((iso, i) => {
     const w =
       0.55 +
-      0.45 * Math.sin((i / Math.max(n / 4, 1)) * Math.PI) * (i % 2 === 0 ? 1 : 0.92)
+      0.45 *
+        Math.sin((i / Math.max(n / 4, 1)) * Math.PI) *
+        (i % 2 === 0 ? 1 : 0.92)
     const revenue = Math.round((kpis.revenue / n) * w)
-    const orders = Math.max(
-      0,
-      Math.round((kpis.orders / n) * w * 0.95)
-    )
-    const leads = Math.max(
-      0,
-      Math.round((kpis.leads / n) * w * 0.95)
-    )
+    const orders = Math.max(0, Math.round((kpis.orders / n) * w * 0.95))
+    const leads = Math.max(0, Math.round((kpis.leads / n) * w * 0.95))
     const spend = Math.round((kpis.ad_spend / n) * w * 0.95)
     return { date: iso, revenue, orders, leads, spend }
   })
+}
+
+/** Tabla comparativa diaria con métricas por día, ordenada de más reciente a más antiguo. */
+export function buildDailyComparativo(
+  range: StrictDateRange,
+  canales?: string[]
+): DailyComparativoRow[] {
+  const days = eachIsoDayInRange(range)
+
+  return days
+    .map((iso) => {
+      const dayRange: StrictDateRange = {
+        from: new Date(`${iso}T00:00:00`),
+        to: new Date(`${iso}T23:59:59`),
+      }
+
+      const orders = filterByStrictRange(mockOrders, dayRange).filter((o) =>
+        matchCanal(o, canales)
+      )
+      const ads = filterByStrictRange(mockAdSpend, dayRange).filter((a) =>
+        matchCanal(a, canales)
+      )
+      const leads = filterByStrictRange(mockLeads, dayRange).filter((l) =>
+        matchCanal(l, canales)
+      )
+
+      const ventas = orders
+        .filter(
+          (o) => o.payment_status === "paid" && o.order_status !== "cancelled"
+        )
+        .reduce((a, o) => a + o.revenue, 0)
+
+      const pedidos = orders.filter(
+        (o) => o.order_status === "completed" || o.order_status === "pending"
+      ).length
+
+      const inversion = ads.reduce((a, x) => a + x.spend, 0)
+      const leadsCount = leads.length
+      const cpa = leadsCount > 0 ? inversion / leadsCount : 0
+      const roas = inversion > 0 ? ventas / inversion : 0
+
+      // Top canal by revenue
+      const canalMap = new Map<string, number>()
+      for (const o of orders) {
+        if (o.payment_status !== "paid" || o.order_status === "cancelled")
+          continue
+        canalMap.set(
+          o.channel_macro,
+          (canalMap.get(o.channel_macro) ?? 0) + o.revenue
+        )
+      }
+      const topCanal =
+        [...canalMap.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—"
+
+      return { date: iso, ventas, canal: topCanal, pedidos, inversion, cpa, roas }
+    })
+    .filter((row) => row.ventas > 0 || row.pedidos > 0 || row.inversion > 0)
+    .reverse() // most recent first
 }
 
 function rowKey(m: string, d: string) {
@@ -94,12 +169,19 @@ function rowKey(m: string, d: string) {
 
 export function buildChannelPerformance(
   adChannelMappings: readonly AdChannelMappingRow[],
-  range: StrictDateRange
+  range: StrictDateRange,
+  canales?: string[]
 ): ChannelPerformanceRow[] {
   const keys = new Map<string, ChannelPerformanceRow>()
-  const ads = filterByStrictRange(mockAdSpend, range)
-  const leadsList = filterByStrictRange(mockLeads, range)
-  const orders = filterByStrictRange(mockOrders, range)
+  const ads = filterByStrictRange(mockAdSpend, range).filter((a) =>
+    matchCanal(a, canales)
+  )
+  const leadsList = filterByStrictRange(mockLeads, range).filter((l) =>
+    matchCanal(l, canales)
+  )
+  const orders = filterByStrictRange(mockOrders, range).filter((o) =>
+    matchCanal(o, canales)
+  )
 
   function ensure(
     macro: ChannelPerformanceRow["channel_macro"],

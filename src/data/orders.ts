@@ -1,50 +1,55 @@
 import type { OrderRecord } from "@/types/analytics"
 
-const macros = [
-  "Paid Social",
-  "Search",
-  "Marketplace",
-  "Organic",
-  "Email",
+const shopifyDetallado = ["wsp", "cambio", "tiktok", "TB13", "instagram", "referidos"] as const
+const metaDetallado = [
+  "120243819860760063",
+  "120243819860780063",
+  "120243876956030063",
+  "120243884310180063",
 ] as const
-
-const detalladoByMacro: Record<(typeof macros)[number], OrderRecord["channel_detallado"][]> = {
-  "Paid Social": ["Meta Ads", "TikTok Ads", "Influencers"],
-  Search: ["Google Ads", "SEO / Contenido"],
-  Marketplace: ["Amazon SP"],
-  Organic: ["SEO / Contenido"],
-  Email: ["CRM Email"],
-}
+const kommoDetallado = ["T72045", "TMR14", "Etiquetas de Lead"] as const
 
 function pick<T>(arr: readonly T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]!
 }
 
-function randomOrder(i: number, baseDate: Date): OrderRecord {
-  const macro = pick([...macros])
-  const channel_detallado = pick(detalladoByMacro[macro])
+function isoDate(d: Date): string {
+  return d.toISOString().slice(0, 10)
+}
+
+function addDays(base: Date, n: number): Date {
+  const d = new Date(base)
+  d.setDate(d.getDate() + n)
+  return d
+}
+
+function randomOrder(i: number, date: Date): OrderRecord {
+  const macroRoll = Math.random()
+  const channel_macro =
+    macroRoll < 0.45 ? "Shopify" : macroRoll < 0.78 ? "Meta" : "Kommo"
+
+  const channel_detallado =
+    channel_macro === "Shopify"
+      ? pick(shopifyDetallado)
+      : channel_macro === "Meta"
+        ? pick(metaDetallado)
+        : pick(kommoDetallado)
+
   const revenue = Math.round(45 + Math.random() * 420)
   const cost = Math.round(revenue * (0.12 + Math.random() * 0.35))
-  const roll = Math.random()
-  const payment_status =
-    roll > 0.88 ? "pending" : roll > 0.94 ? "failed" : "paid"
-  const order_roll = Math.random()
-  const order_status =
-    order_roll > 0.9
-      ? "cancelled"
-      : order_roll > 0.82
-        ? "pending"
-        : order_roll > 0.97
-          ? "refunded"
-          : "completed"
 
-  const d = new Date(baseDate)
-  d.setDate(d.getDate() - (i % 45))
+  const roll = Math.random()
+  const payment_status: OrderRecord["payment_status"] =
+    roll > 0.92 ? "pending" : roll > 0.96 ? "failed" : "paid"
+
+  const oRoll = Math.random()
+  const order_status: OrderRecord["order_status"] =
+    oRoll > 0.9 ? "cancelled" : oRoll > 0.82 ? "pending" : "completed"
 
   return {
     order_id: `LO-${100420 + i}`,
-    date: d.toISOString().slice(0, 10),
-    channel_macro: macro,
+    date: isoDate(date),
+    channel_macro,
     channel_detallado,
     revenue,
     cost,
@@ -54,7 +59,11 @@ function randomOrder(i: number, baseDate: Date): OrderRecord {
   }
 }
 
-const base = new Date()
-export const mockOrders: OrderRecord[] = Array.from({ length: 64 }, (_, i) =>
-  randomOrder(i, base)
-).sort((a, b) => (a.date < b.date ? 1 : -1))
+// Generate orders spread over ~70 days: all of May 2026 (up to 11th) and all of April 2026
+const base = new Date("2026-05-11")
+const startOffset = 70
+
+export const mockOrders: OrderRecord[] = Array.from({ length: 120 }, (_, i) => {
+  const daysBack = Math.floor(Math.random() * startOffset)
+  return randomOrder(i, addDays(base, -daysBack))
+}).sort((a, b) => (a.date < b.date ? 1 : -1))

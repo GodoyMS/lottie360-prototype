@@ -1,22 +1,19 @@
 import type { ChannelDetallado, ChannelMacro } from "@/types/analytics"
 
-export const CHANNEL_MACROS: ChannelMacro[] = [
-  "Paid Social",
-  "Search",
-  "Marketplace",
-  "Organic",
-  "Email",
-]
+export const CHANNEL_MACROS: ChannelMacro[] = ["Shopify", "Meta", "Kommo"]
 
 export const DETALLADOS_BY_MACRO: Record<
   ChannelMacro,
   readonly ChannelDetallado[]
 > = {
-  "Paid Social": ["Meta Ads", "TikTok Ads", "Influencers", "YouTube Ads"],
-  Search: ["Google Ads", "SEO / Contenido"],
-  Marketplace: ["Amazon SP"],
-  Organic: ["SEO / Contenido"],
-  Email: ["CRM Email"],
+  Shopify: ["wsp", "cambio", "tiktok", "TB13", "instagram", "referidos"],
+  Meta: [
+    "120243819860760063",
+    "120243819860780063",
+    "120243876956030063",
+    "120243884310180063",
+  ],
+  Kommo: ["T72045", "TMR14", "Etiquetas de Lead"],
 }
 
 export function detalladosForMacro(
