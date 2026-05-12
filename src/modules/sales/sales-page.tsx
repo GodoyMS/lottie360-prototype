@@ -3,7 +3,7 @@ import type { DateRange } from "react-day-picker"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { mockOrders } from "@/data/orders"
-import type { ChannelMacro, OrderRecord, OrderStatus, PaymentStatus } from "@/types/analytics"
+import type { OrderRecord, OrderStatus, PaymentStatus } from "@/types/analytics"
 import { formatCurrency, formatNumber, formatShortDate } from "@/lib/format"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -63,8 +63,6 @@ const CANAL_GLOBAL_OPTIONS = [
   { value: "Kommo", label: "Kommo" },
 ]
 const ALL_CANALES = CANAL_GLOBAL_OPTIONS.map((o) => o.value)
-const macros: ChannelMacro[] = ["Shopify", "Meta", "Kommo"]
-
 const paymentLabel: Record<PaymentStatus, string> = {
   paid: "Pagado",
   pending: "Pendiente",
@@ -315,7 +313,6 @@ export function SalesPage() {
               <DropdownMenuPortal>
                 <DropdownMenuSubContent
                   className="p-0 w-auto"
-                  onCloseAutoFocus={(e) => e.preventDefault()}
                   onInteractOutside={(e) => e.preventDefault()}
                 >
                   <Calendar
