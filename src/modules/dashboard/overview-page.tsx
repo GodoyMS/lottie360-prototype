@@ -315,7 +315,7 @@ export function OverviewPage() {
       </div>
 
       {/* ── Filter bar ── */}
-      <div className="flex flex-col md:flex-row flex-wrap items-center gap-2 flex-1">
+      <div className="flex  flex-col md:flex-row flex-wrap items-center gap-2 flex-1">
         <div className="flex justify-start w-full md:w-auto items-center gap-1.5 shrink-0 text-muted-foreground">
           <Filter className="size-3.5" />
           <span className="text-xs font-medium">Filtros</span>
