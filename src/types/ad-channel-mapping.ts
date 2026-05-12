@@ -1,9 +1,6 @@
-import type { ChannelDetallado, ChannelMacro } from "@/types/analytics"
-
-/** Mapeo publicidad → canales (atribución). `row_id` es interno; la tabla de producto usa ad_id + canales. */
+/** Canal mapping row — defines a canal_macro / canal_detallado pair. */
 export type AdChannelMappingRow = {
   row_id: string
-  ad_id: string
-  canal_macro: ChannelMacro
-  canal_detallado: ChannelDetallado
+  canal_macro: string
+  canal_detallado: string
 }

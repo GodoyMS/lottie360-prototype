@@ -1,17 +1,15 @@
 import { createContext } from "react"
 import type { AdChannelMappingRow } from "@/types/ad-channel-mapping"
-import type { ChannelDetallado, ChannelMacro } from "@/types/analytics"
 
 export type CreateMappingInput = {
-  ad_id: string
-  canal_macro: ChannelMacro
-  canal_detallado: ChannelDetallado
+  canal_macro: string
+  canal_detallado: string
 }
 
 export type UpdateMappingInput = {
   row_id: string
-  canal_macro: ChannelMacro
-  canal_detallado: ChannelDetallado
+  canal_macro: string
+  canal_detallado: string
 }
 
 export type MutationResult =
@@ -19,8 +17,8 @@ export type MutationResult =
   | { ok: false; error: string }
 
 export type ChannelAttributionContextValue = {
-  mappings: AdChannelMappingRow[]
-  /** Se incrementa en cada mutación para forzar recálculo en vistas. */
+  mappings: readonly AdChannelMappingRow[]
+  /** Increments on every mutation to trigger recalculation in views. */
   revision: number
   updatedAt: number
   createMapping: (input: CreateMappingInput) => MutationResult

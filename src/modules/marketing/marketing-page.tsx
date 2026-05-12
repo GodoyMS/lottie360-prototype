@@ -25,7 +25,6 @@ import {
   strictRangeFromDateRange,
 } from "@/lib/date-range"
 import { resolveAdSpendChannels } from "@/lib/resolve-ad-attribution"
-import type { AdChannelMappingRow } from "@/types/ad-channel-mapping"
 import { formatCurrency, formatNumber } from "@/lib/format"
 import {
   isCpaAlert,
@@ -107,7 +106,6 @@ function aggregateChannels(
   ads: typeof mockAdSpend,
   leads: typeof mockLeads,
   orders: typeof mockOrders,
-  mappings: readonly AdChannelMappingRow[],
   canales: string[]
 ): ChannelPerformanceRow[] {
   const map = new Map<string, ChannelPerformanceRow>()
@@ -117,7 +115,7 @@ function aggregateChannels(
   }
 
   for (const a of ads) {
-    const { channel_macro, channel_detallado } = resolveAdSpendChannels(a, mappings)
+    const { channel_macro, channel_detallado } = resolveAdSpendChannels(a)
     if (!canales.includes(channel_macro)) continue
     const k = key(channel_macro, channel_detallado)
     let row = map.get(k)
@@ -219,7 +217,7 @@ function CanalStatCard({ canal, spend, leads }: CanalStatCardProps) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function MarketingPage() {
-  const { mappings, revision } = useChannelAttribution()
+  const { revision } = useChannelAttribution()
   const mr = currentMonthRange()
   const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: mr.from, to: mr.to })
   const [selectedCanales, setSelectedCanales] = useState<string[]>(ALL_CANALES)
@@ -246,18 +244,18 @@ export function MarketingPage() {
   )
 
   const rows = useMemo(
-    () => aggregateChannels(filteredAds, filteredLeads, filteredOrders, mappings, selectedCanales),
-    [filteredAds, filteredLeads, filteredOrders, mappings, revision, selectedCanales]
+    () => aggregateChannels(filteredAds, filteredLeads, filteredOrders, selectedCanales),
+    [filteredAds, filteredLeads, filteredOrders, revision, selectedCanales]
   )
 
   const spendByChannel = useMemo(() => {
     const m = new Map<string, number>()
     for (const a of filteredAds) {
-      const { channel_detallado } = resolveAdSpendChannels(a, mappings)
+      const { channel_detallado } = resolveAdSpendChannels(a)
       m.set(channel_detallado, (m.get(channel_detallado) ?? 0) + a.spend)
     }
     return [...m.entries()].map(([name, spend]) => ({ name, spend })).sort((a, b) => b.spend - a.spend)
-  }, [filteredAds, mappings, revision])
+  }, [filteredAds, revision])
 
   const leadsByChannel = useMemo(() => {
     const m = new Map<string, number>()
@@ -280,11 +278,15 @@ export function MarketingPage() {
 
   if (!ready) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-10 w-full max-w-md" />
+      <div className="space-y-5">
+        <div className="space-y-2">
+          <Skeleton className="h-7 w-40 max-w-full" />
+          <Skeleton className="h-4 w-72 max-w-full" />
+        </div>
+        <Skeleton className="h-10 w-full rounded-xl" />
         <div className="grid gap-4 lg:grid-cols-2">
-          <Skeleton className="h-72 rounded-xl" />
-          <Skeleton className="h-72 rounded-xl" />
+          <Skeleton className="h-64 rounded-xl" />
+          <Skeleton className="h-64 rounded-xl" />
         </div>
       </div>
     )
@@ -300,24 +302,24 @@ export function MarketingPage() {
         </p>
       </div>
 
-      {/* ── Filter bar (same style as summary) ── */}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-muted/10 px-3 py-2 shadow-sm">
-        <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground">
+      {/* ── Filter bar ── */}
+      <div className="flex flex-col md:flex-row flex-wrap items-center gap-2 flex-1">
+        <div className="flex justify-start w-full md:w-auto items-center gap-1.5 shrink-0 text-muted-foreground">
           <Filter className="size-3.5" />
           <span className="text-xs font-medium">Filtros</span>
         </div>
-        <div className="h-4 w-px bg-border/60 shrink-0" />
         <DateRangePicker
           value={dateRange}
           onChange={setDateRange}
-          className="h-8 text-sm min-w-[140px]"
+          className="h-10 w-full md:w-auto text-sm min-w-[140px]"
         />
+        <div className="h-4 hidden md:block w-px bg-border/60 shrink-0" />
         <MultiSelect
           options={CANAL_GLOBAL_OPTIONS}
           onValueChange={setSelectedCanales}
           defaultValue={ALL_CANALES}
           placeholder="Canal Global"
-          className="h-8 min-w-[160px] max-w-[240px] text-sm"
+          className="flex-1 min-w-[160px] bg-card border border-border max-w-[240px] text-sm"
           maxCount={2}
           animation={0}
         />

@@ -1,21 +1,17 @@
 import type { AdChannelMappingRow } from "@/types/ad-channel-mapping"
-import { mockAdSpend } from "@/data/ads"
+import { DETALLADOS_BY_MACRO, CHANNEL_MACROS } from "@/lib/channel-taxonomy"
 
-/** Catálogo inicial: un mapeo por cada `ad_id` distinto en el dataset de gasto. */
+/** Default catalog: one row per macro × detallado pair from the taxonomy. */
 export function buildSeedAdChannelMappings(): AdChannelMappingRow[] {
-  const seen = new Set<string>()
   const rows: AdChannelMappingRow[] = []
-
-  for (const ad of mockAdSpend) {
-    if (seen.has(ad.ad_id)) continue
-    seen.add(ad.ad_id)
-    rows.push({
-      row_id: `seed_${ad.ad_id}`,
-      ad_id: ad.ad_id,
-      canal_macro: ad.channel_macro,
-      canal_detallado: ad.channel_detallado,
-    })
+  for (const macro of CHANNEL_MACROS) {
+    for (const det of DETALLADOS_BY_MACRO[macro] ?? []) {
+      rows.push({
+        row_id: `seed_${macro}_${det}`,
+        canal_macro: macro,
+        canal_detallado: det,
+      })
+    }
   }
-
-  return rows.sort((a, b) => a.ad_id.localeCompare(b.ad_id))
+  return rows
 }

@@ -4,7 +4,6 @@ import type {
   DashboardKpis,
   TimeSeriesPoint,
 } from "@/types/analytics"
-import type { AdChannelMappingRow } from "@/types/ad-channel-mapping"
 import { mockAdSpend } from "@/data/ads"
 import { mockLeads } from "@/data/leads"
 import { mockOrders } from "@/data/orders"
@@ -168,7 +167,6 @@ function rowKey(m: string, d: string) {
 }
 
 export function buildChannelPerformance(
-  adChannelMappings: readonly AdChannelMappingRow[],
   range: StrictDateRange,
   canales?: string[]
 ): ChannelPerformanceRow[] {
@@ -206,10 +204,7 @@ export function buildChannelPerformance(
   }
 
   for (const ad of ads) {
-    const { channel_macro, channel_detallado } = resolveAdSpendChannels(
-      ad,
-      adChannelMappings
-    )
+    const { channel_macro, channel_detallado } = resolveAdSpendChannels(ad)
     const cur = ensure(channel_macro, channel_detallado)
     cur.spend += ad.spend
     cur.revenue += ad.revenue_attributed
